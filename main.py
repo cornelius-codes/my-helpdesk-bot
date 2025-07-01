@@ -38,8 +38,6 @@ class Config:
             logger.warning("No API_KEYS set in environment, using default key (insecure for production!)")
             cls.VALID_API_KEYS = {"default-dev-key"}
 
-Config.validate()
-
 # --- Logging Setup ---
 logging.basicConfig(
     level=logging.INFO,
@@ -50,6 +48,11 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("secure-chatbot")
+
+Config.validate()
+
+# Track API start time for uptime reporting
+API_START_TIME = time.time()
 
 # --- OpenAI Client ---
 client = openai.OpenAI(
@@ -265,7 +268,7 @@ async def ask_question(
         )
 
 @app.get("/health", response_model=HealthResponse)
-async def health_check(start_time: float = Depends(lambda: time.time())):
+async def health_check():
     """
     Health check endpoint that reports API status and version information.
     """
@@ -273,7 +276,7 @@ async def health_check(start_time: float = Depends(lambda: time.time())):
         status="healthy",
         version=app.version,
         model=Config.AI_MODEL,
-        uptime=time.time() - start_time
+        uptime=time.time() - API_START_TIME
     )
 
 @app.get("/", include_in_schema=False)
